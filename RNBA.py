@@ -29,7 +29,7 @@ class Refridgerator:
         self.Y = None
         self.savepath = None
         
-    def Read_Dataset(self, Binary = False):
+    def Read_Dataset(self, Binary = False, Normalized = False):
         """
         Reads existing train/dev/test sets and returns them as numpy arrays
         """
@@ -59,7 +59,7 @@ class Refridgerator:
             Y_test = test_data[:,0:2]
             X_dev = dev_data[:,2:]
             Y_dev = dev_data[:,0:2]
-
+        
         return X_train, Y_train, X_dev, Y_dev, X_test, Y_test
 
     def Binary_Clf_Dataset(self):
@@ -76,30 +76,16 @@ class Refridgerator:
         Y_train_b = np.ones((np.shape(Y_train)[0],1))
         Y_dev_b = np.ones((np.shape(Y_dev)[0],1))
         Y_test_b = np.ones((np.shape(Y_test)[0],1))
-        half = int(np.shape(X_train)[1]/2)# half of the stats, allows us to
-                                          # switch winner and loser stats
 
         for i in range(np.shape(X_train)[0]):
-            switch = random.random()
-            if switch >= 0.5:
+            if Y_train[i,0] < Y_train[i,1]:
                 Y_train_b[i,0] = 0
-                fhalf = X_train[i,0:half]
-                lhalf = X_train[i,half:]
-                X_train[i,:] = np.concatenate((lhalf, fhalf), axis = None)
         for i in range(np.shape(X_dev)[0]):
-            switch = random.random()
-            if switch >= 0.5:
+            if Y_dev[i,0] < Y_dev[i,1]:
                 Y_dev_b[i,0] = 0
-                fhalf = X_dev[i,0:half]
-                lhalf = X_dev[i,half:]
-                X_dev[i,:] = np.concatenate((lhalf, fhalf), axis = None)
         for i in range(np.shape(X_test)[0]):
-            switch = random.random()
-            if switch >= 0.5:
+            if Y_test[i,0] < Y_test[i,1]:
                 Y_test_b[i,0] = 0
-                fhalf = X_test[i,0:half]
-                lhalf = X_test[i,half:]
-                X_test[i,:] = np.concatenate((lhalf, fhalf), axis = None)
 
         with open('datasets/binary_train_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
                 str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as train_file:
@@ -116,6 +102,82 @@ class Refridgerator:
             test_writer = csv.writer(test_file, delimiter=',')
             for i in range(np.shape(X_test)[0]):
                 test_writer.writerow(np.concatenate((Y_test_b[i,0], X_test[i,:]), axis=None))
+
+    def Scramble(self):
+        """
+        Switches winning/losing order of random training examples so the
+        algorithm doesn't just think that the first team listed always scores
+        more
+        """
+        X_train, Y_train, X_dev, Y_dev, X_test, Y_test = self.Read_Dataset()
+        half = int(np.shape(X_train)[1]/2)# half of the stats, allows us to
+                                          # switch winner and loser stats
+
+        for i in range(np.shape(X_train)[0]):
+            switch = random.random()
+            if switch >= 0.5:
+                winscore = Y_train[i,0]
+                Y_train[i,0] = Y_train[i,1]
+                Y_train[i,1] = winscore
+                fhalf = X_train[i,0:half]
+                lhalf = X_train[i,half:]
+                X_train[i,:] = np.concatenate((lhalf, fhalf), axis = None)
+        for i in range(np.shape(X_dev)[0]):
+            switch = random.random()
+            if switch >= 0.5:
+                winscore = Y_dev[i,0]
+                Y_dev[i,0] = Y_dev[i,1]
+                Y_dev[i,1] = winscore
+                fhalf = X_dev[i,0:half]
+                lhalf = X_dev[i,half:]
+                X_dev[i,:] = np.concatenate((lhalf, fhalf), axis = None)
+        for i in range(np.shape(X_test)[0]):
+            switch = random.random()
+            if switch >= 0.5:
+                winscore = Y_test[i,0]
+                Y_test[i,0] = Y_test[i,1]
+                Y_test[i,1] = winscore
+                fhalf = X_test[i,0:half]
+                lhalf = X_test[i,half:]
+
+        with open('datasets/train_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
+                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as train_file:
+            train_writer = csv.writer(train_file, delimiter=',')
+            for i in range(np.shape(X_train)[0]):
+                train_writer.writerow(np.concatenate((Y_train[i,:], X_train[i,:]), axis=None))
+        with open('datasets/dev_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
+                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as dev_file:
+            dev_writer = csv.writer(dev_file, delimiter=',')
+            for i in range(np.shape(X_dev)[0]):
+                dev_writer.writerow(np.concatenate((Y_dev[i,:], X_dev[i,:]), axis=None))
+        with open('datasets/test_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
+                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as test_file:
+            test_writer = csv.writer(test_file, delimiter=',')
+            for i in range(np.shape(X_test)[0]):
+                test_writer.writerow(np.concatenate((Y_test[i,:], X_test[i,:]), axis=None))
+
+    def Normalize(self):
+        """
+        Switches winning/losing order of random training examples so the
+        algorithm doesn't just think that the first team listed always scores
+        more
+        """
+        X_train, Y_train, X_dev, Y_dev, X_test, Y_test = self.Read_Dataset()
+
+        X_data = [X_train, X_dev, X_test]
+        Y_data = [Y_train, Y_dev, Y_test]
+        label = ["train", "dev", "test"]
+
+        for i in range(3):
+            mean = np.sum(X_data[i], axis = 0)/np.shape(X_data[i])[0]
+            X_data[i] = X_data[i] - mean
+            var = np.sum(X_data[i]**2, axis = 0)/np.shape(X_data[i])[0]
+            X_data[i] = X_data[i]/var
+            with open('datasets/'+label[i]+'_normalized_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
+                    str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as dfile:
+                writer = csv.writer(dfile, delimiter=',')
+                for j in range(np.shape(X_data[i])[0]):
+                    writer.writerow(np.concatenate((Y_data[i][j,:], X_data[i][j,:]), axis=None))
 
     def Build_Dataset(self, player_path, savepath = "data"):
         """ 
@@ -221,9 +283,10 @@ class Refridgerator:
                             x[(17-len(self.stats_omitted))*(j+self.num_games*i):\
                                     (17-len(self.stats_omitted))*(j+1+self.num_games*i)]=\
                                     playstatsl[rankplaysl[len(rankplaysl)-1-i+self.num_players],:,j]
+
                 #This if statement just makes sure there are player stats
                 #present in x. The first few games make it past the if
-                #statements above for some reason.
+                #statements above since the arrays are initialized as zeros.
                 if np.dot(x[0:self.num_games*(17-len(self.stats_omitted))],x[0:self.num_games*(17-len(self.stats_omitted))]) != 0\
                 and np.dot(x[-self.num_games*(17-len(self.stats_omitted)):],x[-self.num_games*(17-len(self.stats_omitted)):]) != 0:
                     self.X.append(x)
@@ -243,6 +306,7 @@ class Refridgerator:
         #from remaining games to ensure that they come from the same distribution
         I = np.arange(trainsetsz,np.shape(self.X)[0])
         np.random.shuffle(I)
+        print(I)
         with open('datasets/test_'+savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
                 str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode = 'w') as test_file:
             with open('datasets/dev_'+savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
@@ -254,3 +318,6 @@ class Refridgerator:
                         test_writer.writerow(np.concatenate((self.Y[I[i],:], self.X[I[i],:]), axis=None))
                     else:
                         dev_writer.writerow(np.concatenate((self.Y[I[i],:], self.X[I[i],:]), axis=None))
+
+        self.Scramble()
+        self.Normalize()
