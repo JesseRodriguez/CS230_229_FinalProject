@@ -34,12 +34,29 @@ class Refridgerator:
         Reads existing train/dev/test sets and returns them as numpy arrays
         """
         if Binary:
-            train_data = pd.read_csv('datasets/binary_train_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
-                    str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv',header = None).to_numpy()
-            test_data = pd.read_csv('datasets/binary_test_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
-                    str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv',header = None).to_numpy()
-            dev_data = pd.read_csv('datasets/binary_dev_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
-                    str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv',header = None).to_numpy()
+            Blabel = "binary"
+        else:
+            Blabel = ""
+
+        if Normalized:
+            Nlabel = "normalized"
+        else:
+            Nlabel = ""
+            
+        train_data = pd.read_csv('datasets/'+Nlabel+Blabel+'_train_'+self.savepath+'np'+\
+                str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
+                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv',\
+                header = None).to_numpy()
+        test_data = pd.read_csv('datasets/'+Nlabel+Blabel+'_test_'+self.savepath+'np'+\
+                str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
+                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv',\
+                header = None).to_numpy()
+        dev_data = pd.read_csv('datasets/'+Nlabel+Blabel+'_dev_'+self.savepath+'np'+\
+                str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
+                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv',\
+                header = None).to_numpy()
+        
+        if Binary:
             X_train = train_data[:,1:]
             Y_train = train_data[:,0]
             X_test = test_data[:,1:]
@@ -47,12 +64,6 @@ class Refridgerator:
             X_dev = dev_data[:,1:]
             Y_dev = dev_data[:,0]
         else:
-            train_data = pd.read_csv('datasets/train_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
-                    str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv',header = None).to_numpy()
-            test_data = pd.read_csv('datasets/test_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
-                    str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv',header = None).to_numpy()
-            dev_data = pd.read_csv('datasets/dev_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
-                    str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv',header = None).to_numpy()
             X_train = train_data[:,2:]
             Y_train = train_data[:,0:2]
             X_test = test_data[:,2:]
@@ -62,12 +73,17 @@ class Refridgerator:
         
         return X_train, Y_train, X_dev, Y_dev, X_test, Y_test
 
-    def Binary_Clf_Dataset(self):
+    def Binary_Clf_Dataset(self, Normalized = False):
         """
         Builds Train/Dev/Test sets for Binary classifier model
         """
+        if Normalized:
+            Nlabel = "normalized"
+        else:
+            Nlabel = ""
+
         #Check if this dataset has been built
-        if os.path.isfile('datasets/binary_train_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
+        if os.path.isfile('datasets/'+Nlabel+'binary_train_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
                 str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv'):
             print("binary classifier dataset already exists for this configuration")
             return
@@ -87,99 +103,61 @@ class Refridgerator:
             if Y_test[i,0] < Y_test[i,1]:
                 Y_test_b[i,0] = 0
 
-        with open('datasets/binary_train_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
+        with open('datasets/'+Nlabel+'binary_train_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
                 str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as train_file:
             train_writer = csv.writer(train_file, delimiter=',')
             for i in range(np.shape(X_train)[0]):
                 train_writer.writerow(np.concatenate((Y_train_b[i,0], X_train[i,:]), axis=None))
-        with open('datasets/binary_dev_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
+        with open('datasets/'+Nlabel+'binary_dev_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
                 str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as dev_file:
             dev_writer = csv.writer(dev_file, delimiter=',')
             for i in range(np.shape(X_dev)[0]):
                 dev_writer.writerow(np.concatenate((Y_dev_b[i,0], X_dev[i,:]), axis=None))
-        with open('datasets/binary_test_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
+        with open('datasets/'+Nlabel+'binary_test_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
                 str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as test_file:
             test_writer = csv.writer(test_file, delimiter=',')
             for i in range(np.shape(X_test)[0]):
                 test_writer.writerow(np.concatenate((Y_test_b[i,0], X_test[i,:]), axis=None))
 
-    def Scramble(self):
+    def Scramble(self, X_train, Y_train, X_dev, Y_dev, X_test, Y_test):
         """
         Switches winning/losing order of random training examples so the
         algorithm doesn't just think that the first team listed always scores
         more
         """
-        X_train, Y_train, X_dev, Y_dev, X_test, Y_test = self.Read_Dataset()
         half = int(np.shape(X_train)[1]/2)# half of the stats, allows us to
                                           # switch winner and loser stats
-
-        for i in range(np.shape(X_train)[0]):
-            switch = random.random()
-            if switch >= 0.5:
-                winscore = Y_train[i,0]
-                Y_train[i,0] = Y_train[i,1]
-                Y_train[i,1] = winscore
-                fhalf = X_train[i,0:half]
-                lhalf = X_train[i,half:]
-                X_train[i,:] = np.concatenate((lhalf, fhalf), axis = None)
-        for i in range(np.shape(X_dev)[0]):
-            switch = random.random()
-            if switch >= 0.5:
-                winscore = Y_dev[i,0]
-                Y_dev[i,0] = Y_dev[i,1]
-                Y_dev[i,1] = winscore
-                fhalf = X_dev[i,0:half]
-                lhalf = X_dev[i,half:]
-                X_dev[i,:] = np.concatenate((lhalf, fhalf), axis = None)
-        for i in range(np.shape(X_test)[0]):
-            switch = random.random()
-            if switch >= 0.5:
-                winscore = Y_test[i,0]
-                Y_test[i,0] = Y_test[i,1]
-                Y_test[i,1] = winscore
-                fhalf = X_test[i,0:half]
-                lhalf = X_test[i,half:]
-
-        with open('datasets/train_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
-                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as train_file:
-            train_writer = csv.writer(train_file, delimiter=',')
-            for i in range(np.shape(X_train)[0]):
-                train_writer.writerow(np.concatenate((Y_train[i,:], X_train[i,:]), axis=None))
-        with open('datasets/dev_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
-                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as dev_file:
-            dev_writer = csv.writer(dev_file, delimiter=',')
-            for i in range(np.shape(X_dev)[0]):
-                dev_writer.writerow(np.concatenate((Y_dev[i,:], X_dev[i,:]), axis=None))
-        with open('datasets/test_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
-                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as test_file:
-            test_writer = csv.writer(test_file, delimiter=',')
-            for i in range(np.shape(X_test)[0]):
-                test_writer.writerow(np.concatenate((Y_test[i,:], X_test[i,:]), axis=None))
-
-    def Normalize(self):
-        """
-        Switches winning/losing order of random training examples so the
-        algorithm doesn't just think that the first team listed always scores
-        more
-        """
-        X_train, Y_train, X_dev, Y_dev, X_test, Y_test = self.Read_Dataset()
-
         X_data = [X_train, X_dev, X_test]
         Y_data = [Y_train, Y_dev, Y_test]
-        label = ["train", "dev", "test"]
+
+        for i in range(3):
+            for j in range(np.shape(X_data[i])[0]):
+                switch = random.random()
+                if switch >= 0.5:
+                    winscore = Y_data[i][j,0]
+                    Y_data[i][j,0] = Y_data[i][j,1]
+                    Y_data[i][j,1] = winscore
+                    fhalf = X_data[i][j,0:half]
+                    lhalf = X_data[i][j,half:]
+                    X_data[i][j,:] = np.concatenate((lhalf, fhalf), axis = None)
+
+        return X_data[0], Y_data[0], X_data[1], Y_data[1], X_data[2], Y_data[2]
+
+    def Normalize(self, X_train, X_dev, X_test):
+        """
+        Normalizes input vectors
+        """
+        X_data = [X_train, X_dev, X_test]
 
         for i in range(3):
             mean = np.sum(X_data[i], axis = 0)/np.shape(X_data[i])[0]
             X_data[i] = X_data[i] - mean
             var = np.sum(X_data[i]**2, axis = 0)/np.shape(X_data[i])[0]
             X_data[i] = X_data[i]/var
-            with open('datasets/'+label[i]+'_normalized_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
-                    str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as dfile:
-                writer = csv.writer(dfile, delimiter=',')
-                for j in range(np.shape(X_data[i])[0]):
-                    writer.writerow(np.concatenate((Y_data[i][j,:], X_data[i][j,:]), axis=None))
 
-    def Build_Dataset(self, player_path, savepath = "data"):
+        return X_data[0], X_data[1], X_data[2]
+
+    def Build_Dataset(self, player_path, savepath = "data", Normalize = False):
         """ 
         Builds Train/Dev/Test set for ML Model and saves the data to a .csv
 
@@ -191,8 +169,12 @@ class Refridgerator:
             savepath: file name descriptor to fill in the blank: "****_train.csv"
         """
         self.savepath = savepath
+        if Normalize:
+            Nlabel = "normalized"
+        else:
+            Nlabel = ""
         #Check if this dataset has been built
-        if os.path.isfile('datasets/train_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
+        if os.path.isfile('datasets/'+Nlabel+'_train_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
                 str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv'):
             print("dataset already exists for this configuration")
             return
@@ -296,28 +278,46 @@ class Refridgerator:
         self.X = np.array(self.X)
         self.Y = np.array(self.Y)
         trainsetsz = int(np.shape(self.X)[0]//1.25)
-        with open('datasets/train_'+savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
-                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as train_file:
-            train_writer = csv.writer(train_file, delimiter=',')
-            for i in range(trainsetsz):
-                train_writer.writerow(np.concatenate((self.Y[i,:], self.X[i,:]), axis=None))
+        X_train = self.X[0:trainsetsz,:]
+        Y_train = self.Y[0:trainsetsz,:]
 
         #Train set was first 80% of games. Dev/test sets are drawn randomly
         #from remaining games to ensure that they come from the same distribution
+        devsetsz = (np.shape(self.X)[0]-trainsetsz)//2
+        testsetsz = np.shape(self.X)[0]-devsetsz-trainsetsz
+        X_dev = np.zeros((devsetsz,np.shape(self.X)[1]))
+        Y_dev = np.zeros((devsetsz,np.shape(self.Y)[1]))
+        X_test = np.zeros((testsetsz,np.shape(self.X)[1]))
+        Y_test = np.zeros((testsetsz,np.shape(self.Y)[1]))
         I = np.arange(trainsetsz,np.shape(self.X)[0])
         np.random.shuffle(I)
-        print(I)
-        with open('datasets/test_'+savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
-                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode = 'w') as test_file:
-            with open('datasets/dev_'+savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
-                    str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode = 'w') as dev_file:
-                test_writer = csv.writer(test_file, delimiter=',')
-                dev_writer = csv.writer(dev_file, delimiter=',')
-                for i in range(np.shape(self.X)[0]-trainsetsz):
-                    if i < (np.shape(self.X)[0]-trainsetsz)//2:
-                        test_writer.writerow(np.concatenate((self.Y[I[i],:], self.X[I[i],:]), axis=None))
-                    else:
-                        dev_writer.writerow(np.concatenate((self.Y[I[i],:], self.X[I[i],:]), axis=None))
+        for i in range(np.shape(self.X)[0]-trainsetsz):
+            if i < devsetsz:
+                X_dev[i,:] = self.X[I[i],:]
+                Y_dev[i,:] = self.Y[I[i],:]
+            else:
+                X_test[i-devsetsz,:] = self.X[I[i],:]
+                Y_test[i-devsetsz,:] = self.Y[I[i],:]
 
-        self.Scramble()
-        self.Normalize()
+        #Scramble data to avoid the model always picking team 1 as the winner
+        X_train, Y_train, X_dev, Y_dev, X_test, Y_test = self.Scramble(X_train, Y_train, X_dev, Y_dev, X_test, Y_test)
+
+        #Normalize if specified
+        if Normalize:
+            X_train, X_dev, X_test = self.Normalize(X_train, X_dev, X_test)
+
+        with open('datasets/'+Nlabel+'_train_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
+                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as train_file:
+            train_writer = csv.writer(train_file, delimiter=',')
+            for i in range(np.shape(X_train)[0]):
+                train_writer.writerow(np.concatenate((Y_train[i,:], X_train[i,:]), axis=None))
+        with open('datasets/'+Nlabel+'_dev_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
+                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as dev_file:
+            dev_writer = csv.writer(dev_file, delimiter=',')
+            for i in range(np.shape(X_dev)[0]):
+                dev_writer.writerow(np.concatenate((Y_dev[i,:], X_dev[i,:]), axis=None))
+        with open('datasets/'+Nlabel+'_test_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
+                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as test_file:
+            test_writer = csv.writer(test_file, delimiter=',')
+            for i in range(np.shape(X_test)[0]):
+                test_writer.writerow(np.concatenate((Y_test[i,:], X_test[i,:]), axis=None))
