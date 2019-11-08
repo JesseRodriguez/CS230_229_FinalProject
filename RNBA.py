@@ -73,22 +73,23 @@ class Refridgerator:
         
         return X_train, Y_train, X_dev, Y_dev, X_test, Y_test
 
-    def Binary_Clf_Dataset(self, Normalized = False):
+    def Binary_Clf_Dataset(self, normalized = False):
         """
         Builds Train/Dev/Test sets for Binary classifier model
         """
-        if Normalized:
+        if normalized:
             Nlabel = "normalized"
         else:
             Nlabel = ""
 
         #Check if this dataset has been built
-        if os.path.isfile('datasets/'+Nlabel+'binary_train_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
+        if os.path.isfile('datasets/'+Nlabel+'binary_train_'+self.savepath+'np'\
+                +str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
                 str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv'):
             print("binary classifier dataset already exists for this configuration")
             return
 
-        X_train, Y_train, X_dev, Y_dev, X_test, Y_test = self.Read_Dataset()
+        X_train, Y_train, X_dev, Y_dev, X_test, Y_test = self.Read_Dataset(Normalized = normalized)
         Y_train_b = np.ones((np.shape(Y_train)[0],1))
         Y_dev_b = np.ones((np.shape(Y_dev)[0],1))
         Y_test_b = np.ones((np.shape(Y_test)[0],1))
@@ -153,11 +154,11 @@ class Refridgerator:
             mean = np.sum(X_data[i], axis = 0)/np.shape(X_data[i])[0]
             X_data[i] = X_data[i] - mean
             var = np.sum(X_data[i]**2, axis = 0)/np.shape(X_data[i])[0]
-            X_data[i] = X_data[i]/var
+            X_data[i] = X_data[i]/np.sqrt(var)
 
         return X_data[0], X_data[1], X_data[2]
 
-    def Build_Dataset(self, player_path, savepath = "data", Normalize = False):
+    def Build_Dataset(self, player_path, savepath = "data", Normalized = False):
         """ 
         Builds Train/Dev/Test set for ML Model and saves the data to a .csv
 
@@ -169,7 +170,7 @@ class Refridgerator:
             savepath: file name descriptor to fill in the blank: "****_train.csv"
         """
         self.savepath = savepath
-        if Normalize:
+        if Normalized:
             Nlabel = "normalized"
         else:
             Nlabel = ""
@@ -303,7 +304,7 @@ class Refridgerator:
         X_train, Y_train, X_dev, Y_dev, X_test, Y_test = self.Scramble(X_train, Y_train, X_dev, Y_dev, X_test, Y_test)
 
         #Normalize if specified
-        if Normalize:
+        if Normalized:
             X_train, X_dev, X_test = self.Normalize(X_train, X_dev, X_test)
 
         with open('datasets/'+Nlabel+'_train_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\

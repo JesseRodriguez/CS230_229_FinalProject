@@ -8,10 +8,10 @@ if __name__ == '__main__':
     player_path = 'nba-enhanced-stats/2012-18_playerBoxScore.csv'
     team_path = 'nba-enhanced-stats/2012-18_teamBoxScore.csv'
 
-clf = RNBA.Refridgerator(num_players = 2, num_games = 5)
-clf.Build_Dataset(player_path)
-clf.Binary_Clf_Dataset()
-X_train, Y_train, X_dev, Y_dev, X_test, Y_test = clf.Read_Dataset(Binary = True)
+clf = RNBA.Refridgerator(num_players = 5, num_games = 5)
+clf.Build_Dataset(player_path, Normalized = True)
+clf.Binary_Clf_Dataset(normalized = True)
+X_train, Y_train, X_dev, Y_dev, X_test, Y_test = clf.Read_Dataset(Binary = True, Normalized = True)
 
 LG = LogisticRegression.logreg(L_rate = 0.00003)
 cost = LG.fit(X_train, Y_train)
