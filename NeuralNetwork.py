@@ -5,6 +5,56 @@ from tensorflow.python.framework import ops
 
 class FCNN:
     """
+    Fully connected neural network builder using keras framework
+    """
+    def __init__(self, L, h_units, model_name, output_layer = 'exponential', L_rate = 0.001, num_epochs = 250,\
+            mbatch_sz = 128, verbose = 1):
+        """
+        Args:
+        L: Number of layers in the NN, max value is 10 (int)
+        h_units: Number of hidden units in each layer of the network (list)
+        model_name: Name given to model (str)
+        output_layer: type of activation in output layer (str)
+        L_rate: learning rate (float)
+        num_epochs: number of times to run through training set (int)
+        mbatch_sz: Mini batch size (int)
+        verbose: See Keras documentation (0,1,2)
+        """
+        self.L = L
+        self.h_units = h_units
+        assert(len(self.h_units) == self.L)
+        self.model_name = model_name
+        self.output_layer = output_layer
+        self.L_rate = L_rate
+        self.num_epochs = num_epochs
+        self.mbatch_sz = mbatch_sz
+        self.verbose = verbose
+
+    def Model(self, X_train, Y_train):
+        model = tf.keras.models.Sequential()
+        model.add(tf.keras.layers.Dense(self.h_units[0], activation = 'relu', kernel_initializer='glorot_uniform',\
+                bias_initializer='zeros', input_dim = X_train.shape[1]))
+        for l in range(self.L-2):
+            model.add(tf.keras.layers.Dense(self.h_units[l+1], activation = 'relu', kernel_initializer='glorot_uniform',\
+                    bias_initializer='zeros'))
+        model.add(tf.keras.layers.Dense(self.h_units[self.L-1], activation = self.output_layer,\
+                kernel_initializer='glorot_uniform', bias_initializer='zeros'))
+        
+        ADAM = tf.keras.optimizers.Adam(learning_rate = self.L_rate)
+        model.compile(optimizer = ADAM, loss='mean_squared_error', metrics=['mse'])
+        model.fit(x = X_train, y = Y_train, batch_size = self.mbatch_sz, epochs = self.num_epochs,\
+                verbose = self.verbose)
+
+        return model
+
+    def predict(self, model, X, Y):
+        MSE = model.evaluate(x = X, y = Y, verbose = 0)
+        predictions = model.predict(x = X)
+
+        return MSE, predictions
+
+class FCNNTF:
+    """
     Fully connected neural network builder using tensorflow framework, based on tensorflow
     assignment on DL Coursera course
     """

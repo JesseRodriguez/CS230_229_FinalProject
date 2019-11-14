@@ -120,6 +120,19 @@ class Refridgerator:
             for i in range(np.shape(X_test)[0]):
                 test_writer.writerow(np.concatenate((Y_test_b[i,0], X_test[i,:]), axis=None))
 
+    def OnePerEx(self, X, Y):
+        """
+        Turns data into smaller feature vectors and labels, where each x is just
+        one team's stats, and each label y is the corresponding score
+        """
+        half = X.shape[1]//2
+        fhalf = X[:,:half]
+        lhalf = X[:,half:]
+        X_n = np.append(fhalf, lhalf, axis = 0)
+        Y_n = np.append(Y[:,0],Y[:,1])
+
+        return X_n, Y_n
+
     def Scramble(self, X_train, Y_train, X_dev, Y_dev, X_test, Y_test):
         """
         Switches winning/losing order of random training examples so the

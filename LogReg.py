@@ -8,7 +8,7 @@ if __name__ == '__main__':
     player_path = 'nba-enhanced-stats/2012-18_playerBoxScore.csv'
     team_path = 'nba-enhanced-stats/2012-18_teamBoxScore.csv'
 
-clf = RNBA.Refridgerator(num_players = 5, num_games = 5)
+clf = RNBA.Refridgerator(num_players = 4, num_games = 2)
 clf.Build_Dataset(player_path, Normalized = True)
 clf.Binary_Clf_Dataset(normalized = True)
 X_train, Y_train, X_dev, Y_dev, X_test, Y_test = clf.Read_Dataset(Binary = True, Normalized = True)
