@@ -8,7 +8,7 @@ class FCNN:
     Fully connected neural network builder using keras framework
     """
     def __init__(self, L, h_units, model_name, output_layer = 'exponential', L_rate = 0.001, num_epochs = 250,\
-            mbatch_sz = 128, verbose = 1):
+            mbatch_sz = 128, verbose = 1, Forked = False):
         """
         Args:
         L: Number of layers in the NN, max value is 10 (int)
@@ -29,21 +29,26 @@ class FCNN:
         self.num_epochs = num_epochs
         self.mbatch_sz = mbatch_sz
         self.verbose = verbose
+        self.Forked = Forked
 
     def Model(self, X_train, Y_train):
         model = tf.keras.models.Sequential()
-        model.add(tf.keras.layers.Dense(self.h_units[0], activation = 'relu', kernel_initializer='glorot_uniform',\
-                bias_initializer='zeros', input_dim = X_train.shape[1]))
-        for l in range(self.L-2):
-            model.add(tf.keras.layers.Dense(self.h_units[l+1], activation = 'relu', kernel_initializer='glorot_uniform',\
-                    bias_initializer='zeros'))
-        model.add(tf.keras.layers.Dense(self.h_units[self.L-1], activation = self.output_layer,\
-                kernel_initializer='glorot_uniform', bias_initializer='zeros'))
+        if self.Forked:
+            
+            return
+        else:
+            model.add(tf.keras.layers.Dense(self.h_units[0], activation = 'relu', kernel_initializer='glorot_uniform',\
+                    bias_initializer='zeros', input_dim = X_train.shape[1]))
+            for l in range(self.L-2):
+                model.add(tf.keras.layers.Dense(self.h_units[l+1], activation = 'relu', kernel_initializer='glorot_uniform',\
+                        bias_initializer='zeros'))
+            model.add(tf.keras.layers.Dense(self.h_units[self.L-1], activation = self.output_layer,\
+                    kernel_initializer='glorot_uniform', bias_initializer='zeros'))
         
-        ADAM = tf.keras.optimizers.Adam(learning_rate = self.L_rate)
-        model.compile(optimizer = ADAM, loss='mean_squared_error', metrics=['mse'])
-        model.fit(x = X_train, y = Y_train, batch_size = self.mbatch_sz, epochs = self.num_epochs,\
-                verbose = self.verbose)
+            ADAM = tf.keras.optimizers.Adam(learning_rate = self.L_rate)
+            model.compile(optimizer = ADAM, loss='mean_squared_error', metrics=['mse'])
+            model.fit(x = X_train, y = Y_train, batch_size = self.mbatch_sz, epochs = self.num_epochs,\
+                    verbose = self.verbose)
 
         return model
 

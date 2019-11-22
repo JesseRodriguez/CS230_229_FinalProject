@@ -82,13 +82,6 @@ class Refridgerator:
         else:
             Nlabel = ""
 
-        #Check if this dataset has been built
-        if os.path.isfile('datasets/'+Nlabel+'binary_train_'+self.savepath+'np'\
-                +str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
-                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv'):
-            print("binary classifier dataset already exists for this configuration")
-            return
-
         X_train, Y_train, X_dev, Y_dev, X_test, Y_test = self.Read_Dataset(Normalized = normalized)
         Y_train_b = np.ones((np.shape(Y_train)[0],1))
         Y_dev_b = np.ones((np.shape(Y_dev)[0],1))
@@ -104,21 +97,16 @@ class Refridgerator:
             if Y_test[i,0] < Y_test[i,1]:
                 Y_test_b[i,0] = 0
 
-        with open('datasets/'+Nlabel+'binary_train_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
-                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as train_file:
-            train_writer = csv.writer(train_file, delimiter=',')
-            for i in range(np.shape(X_train)[0]):
-                train_writer.writerow(np.concatenate((Y_train_b[i,0], X_train[i,:]), axis=None))
-        with open('datasets/'+Nlabel+'binary_dev_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
-                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as dev_file:
-            dev_writer = csv.writer(dev_file, delimiter=',')
-            for i in range(np.shape(X_dev)[0]):
-                dev_writer.writerow(np.concatenate((Y_dev_b[i,0], X_dev[i,:]), axis=None))
-        with open('datasets/'+Nlabel+'binary_test_'+self.savepath+'np'+str(self.num_players)+'ng'+str(self.num_games)+'rs'+\
-                str(self.rank_scheme)+'so'+str(len(self.stats_omitted))+'.csv', mode='w') as test_file:
-            test_writer = csv.writer(test_file, delimiter=',')
-            for i in range(np.shape(X_test)[0]):
-                test_writer.writerow(np.concatenate((Y_test_b[i,0], X_test[i,:]), axis=None))
+        return X_train, Y_train_b, X_dev, Y_dev_b, X_test, Y_test_b
+
+    def Forked(self, Y):
+        """
+        Creates two label arrays for dual output forked NN.
+        """
+        Y1 = np.reshape(Y[:,0], (Y.shape[0],1))
+        Y2 = np.reshape(Y[:,1], (Y.shape[0],1))
+
+        return Y1, Y2
 
     def OnePerEx(self, X, Y):
         """
@@ -132,6 +120,33 @@ class Refridgerator:
         Y_n = np.append(Y[:,0],Y[:,1])
 
         return X_n, Y_n
+
+    def OutcomeAccuracy(self, Y_p, Y_t, OnePer = False):
+        """
+        Takes predictions and labels and returns the pecentage of game outcomes
+        that were predicted correctly
+        """
+        if OnePer:
+            half = Y_p.shape[0]//2
+            Y_p = np.append(Y_p[:half].reshape((half,1)),Y_p[half:].reshape((half,1)), axis = 1)
+            Y_t = np.append(Y_t[:half].reshape((half,1)),Y_t[half:].reshape((half,1)), axis = 1)
+
+        correct = 0
+        for i in range(Y_p.shape[0]):
+            if Y_p[i,0] > Y_p[i,1]:
+                winp = 1
+            else:
+                winp = 0
+            if Y_t[i,0] > Y_t[i,1]:
+                wint = 1
+            else:
+                wint = 0
+            if winp == wint:
+                correct += 1
+        acc = correct/Y_p.shape[0]
+
+        return acc
+
 
     def Scramble(self, X_train, Y_train, X_dev, Y_dev, X_test, Y_test):
         """
