@@ -108,6 +108,46 @@ class Refridgerator:
 
         return Y1, Y2
 
+    def UnFork(self, Forked_pred):
+        """
+        Remerges label vectors to original format to allow fo evaluation
+        """
+        Y1 = Forked_pred[0]
+        Y2 = Forked_pred[1]
+        Y = np.append(Y1, Y2, axis = 1)
+
+        return Y
+
+    def ToSoftmax(self, Y, Min, Max):
+        """
+        Creates one-hot label vectors for softmax output layer
+        only works with forked models
+        """
+        n = Y.shape[0]
+        Y1 = np.zeros((n, Max-Min+1))
+        Y2 = np.zeros((n, Max-Min+1))
+        for i in range(n):
+            Y1[i,int(Y[i,0])-Min] = 1
+            Y2[i,int(Y[i,1])-Min] = 1
+
+        return Y1, Y2
+
+    def FromSoftmax(self, Forked_pred, Min):
+        """
+        Transforms softmax predictions into the prediction format for evaluation
+        """
+        Y1 = Forked_pred[0]
+        Y2 = Forked_pred[1]
+        n = Y1.shape[0]
+        Yp = np.zeros((n,2))
+        for i in range(n):
+            s1 = np.argmax(Y1[i,:]) + Min
+            s2 = np.argmax(Y2[i,:]) + Min
+            Yp[i,0] = s1
+            Yp[i,1] = s2
+
+        return Yp
+
     def OnePerEx(self, X, Y):
         """
         Turns data into smaller feature vectors and labels, where each x is just

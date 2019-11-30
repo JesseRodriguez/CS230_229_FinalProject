@@ -8,7 +8,7 @@ class FCNN:
     Fully connected neural network builder using keras framework
     """
     def __init__(self, L, h_units, model_name, output_layer = 'exponential', L_rate = 0.001, num_epochs = 250,\
-            mbatch_sz = 128, verbose = 1, Forked = False):
+            mbatch_sz = 128, verbose = 1, Type = None, Regularized = None):
         """
         Args:
         L: Number of layers in the NN, max value is 10 (int)
@@ -22,28 +22,66 @@ class FCNN:
         """
         self.L = L
         self.h_units = h_units
-        assert(len(self.h_units) == self.L)
+        assert(len(self.h_units) == self.L or len(self.h_units) == self.L+1)
         self.model_name = model_name
         self.output_layer = output_layer
         self.L_rate = L_rate
         self.num_epochs = num_epochs
         self.mbatch_sz = mbatch_sz
         self.verbose = verbose
-        self.Forked = Forked
+        if Type == "forked":
+            self.Forked = True
+        if Regularized == 'L2':
+            self.reg = tf.keras.regularizers.l2(0.01)
+        else:
+            self.reg = None
 
-    def Model(self, X_train, Y_train):
+    def Model(self, X_train, Y_train, Y_t2 = None):
         model = tf.keras.models.Sequential()
         if self.Forked:
-            
-            return
+            forkyet = False
+            inputs = tf.keras.layers.Input(shape=(X_train.shape[1],))
+            A = tf.keras.layers.Dense(self.h_units[0], activation = 'relu', kernel_initializer='glorot_uniform',\
+                    bias_initializer='zeros', kernel_regularizer = self.reg)(inputs)
+            for l in range(self.L-2):
+                if self.h_units[l+1] == "f":
+                    forkyet = True
+                    forkloc = l+1
+                    A1 = tf.keras.layers.Dense(self.h_units[l+2], activation = 'relu', kernel_initializer='glorot_uniform',\
+                        bias_initializer='zeros', kernel_regularizer = self.reg)(A)
+                    A2 = tf.keras.layers.Dense(self.h_units[l+2], activation = 'relu', kernel_initializer='glorot_uniform',\
+                        bias_initializer='zeros', kernel_regularizer = self.reg)(A)
+                elif forkyet and self.h_units[l+1] != "f" and l+1 > forkloc:
+                    A1 = tf.keras.layers.Dense(self.h_units[l+1], activation = 'relu', kernel_initializer='glorot_uniform',\
+                        bias_initializer='zeros', kernel_regularizer = self.reg)(A1)
+                    A2 = tf.keras.layers.Dense(self.h_units[l+1], activation = 'relu', kernel_initializer='glorot_uniform',\
+                        bias_initializer='zeros', kernel_regularizer = self.reg)(A2)
+                else:
+                    A = tf.keras.layers.Dense(self.h_units[l+1], activation = 'relu', kernel_initializer='glorot_uniform',\
+                        bias_initializer='zeros', kernel_regularizer = self.reg)(A)
+            Yhat1 = tf.keras.layers.Dense(self.h_units[self.L], activation = self.output_layer,\
+                    kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer = self.reg)(A1)
+            Yhat2 = tf.keras.layers.Dense(self.h_units[self.L], activation = self.output_layer,\
+                    kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer = self.reg)(A2)
+
+            model = tf.keras.models.Model(inputs=inputs, outputs=[Yhat1, Yhat2])
+            ADAM = tf.keras.optimizers.Adam(learning_rate = self.L_rate)
+            if self.output_layer == "exponential":
+                model.compile(optimizer = ADAM, loss='mean_squared_error', metrics=['mse'])
+            if self.output_layer == "softmax":
+                model.compile(optimizer = ADAM, loss = 'categorical_crossentropy', metrics=['categorical_accuracy'])
+            model.fit(x = X_train, y = [Y_train, Y_t2], batch_size = self.mbatch_sz, epochs = self.num_epochs,\
+                    verbose = self.verbose)
+
+            return model
         else:
             model.add(tf.keras.layers.Dense(self.h_units[0], activation = 'relu', kernel_initializer='glorot_uniform',\
-                    bias_initializer='zeros', input_dim = X_train.shape[1]))
+                    bias_initializer='zeros', input_dim = X_train.shape[1], kernel_regularizer = self.reg))
             for l in range(self.L-2):
                 model.add(tf.keras.layers.Dense(self.h_units[l+1], activation = 'relu', kernel_initializer='glorot_uniform',\
-                        bias_initializer='zeros'))
+                        bias_initializer='zeros', kernel_regularizer = self.reg))
             model.add(tf.keras.layers.Dense(self.h_units[self.L-1], activation = self.output_layer,\
-                    kernel_initializer='glorot_uniform', bias_initializer='zeros'))
+                    kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer = self.reg))
         
             ADAM = tf.keras.optimizers.Adam(learning_rate = self.L_rate)
             model.compile(optimizer = ADAM, loss='mean_squared_error', metrics=['mse'])
