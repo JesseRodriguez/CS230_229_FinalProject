@@ -187,6 +187,38 @@ class Refridgerator:
 
         return acc
 
+    def BinaryAccuracy(self, Y_p, Y_t):
+        """
+        Takes predictions from binary classifier and outputs accuracy
+        """
+        n = Y_t.shape[0]
+        Y_p = np.reshape(Y_p, Y_t.shape)
+
+        Acc = np.sum(1-np.abs(Y_p-Y_t))/n
+
+        return Acc
+
+    def Spreads(self, Y):
+        """
+        Takes arrray of labels and outputs the spread for each game
+        """
+        n = Y.shape[0]
+        Spreads = np.zeros((n,1))
+        for i in range(n):
+            Spreads[i] = abs(Y[i,0]-Y[i,1])
+
+        return Spreads
+
+    def CombinedScores(self, Y):
+        """
+        Takes arrray of labels and outputs total points scored for each game
+        """
+        n = Y.shape[0]
+        Score = np.zeros((n,1))
+        for i in range(n):
+            Score[i] = Y[i,0]+Y[i,1]
+
+        return Score
 
     def Scramble(self, X_train, Y_train, X_dev, Y_dev, X_test, Y_test):
         """
@@ -264,7 +296,7 @@ class Refridgerator:
                 player_data["playORB"][i], player_data["playDRB"][i]]
             players[name]["GameCount"] += 1
 
-        #Now do the same for game outcomes {game: {team: {players: , score: }}}
+        #Now do the same for game outcomes {game: {team: {home: ,players: , score: }}}
         games = {}
         for i in range(len(player_data["gmDate"])):
             gamedate = str(player_data["gmDate"][i])
@@ -273,9 +305,13 @@ class Refridgerator:
             matchupb = player_data["opptAbbr"][i]+"vs"+player_data["teamAbbr"][i]
             team = player_data["teamAbbr"][i]
             opteam = player_data["opptAbbr"][i]
+            if player_data["teamLoc"][i] == "Home":
+                home = 1
+            else:
+                home = 0
             if gamedate+"_"+matchupf not in games and gamedate+"_"+matchupb not in games:
-                games[gamedate+"_"+matchupf] = {team: {"players": [], "score": 0}, opteam: \
-                        {"players": [], "score": 0}}
+                games[gamedate+"_"+matchupf] = {team: {"home": home, "players": [], "score": 0}, opteam: \
+                        {"home": 1-home, "players": [], "score": 0}}
             if gamedate+"_"+matchupf not in games:
                 games[gamedate+"_"+matchupb][team]["players"].append(name)
                 games[gamedate+"_"+matchupb][team]["score"] += player_data["playPTS"][i]
@@ -290,7 +326,7 @@ class Refridgerator:
             p = game.find("_")
             gamedate = game[0:p]
             teams = list(games[game].keys())
-            if games[game][teams[0]]["score"] > games[game][teams[1]]["score"]:
+            if games[game][teams[0]]["home"] == 1:
                 teamw = teams[0]
                 teaml = teams[1]
             else:
@@ -369,7 +405,8 @@ class Refridgerator:
                 Y_test[i-devsetsz,:] = self.Y[I[i],:]
 
         #Scramble data to avoid the model always picking team 1 as the winner
-        X_train, Y_train, X_dev, Y_dev, X_test, Y_test = self.Scramble(X_train, Y_train, X_dev, Y_dev, X_test, Y_test)
+        # VERSION NOTE: this was back when teams were ordered by final score, now they are ordered by home/away
+        #X_train, Y_train, X_dev, Y_dev, X_test, Y_test = self.Scramble(X_train, Y_train, X_dev, Y_dev, X_test, Y_test)
 
         #Normalize if specified
         if Normalized:
