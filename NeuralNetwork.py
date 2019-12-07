@@ -31,8 +31,12 @@ class FCNN:
         self.verbose = verbose
         if Type == "forked":
             self.Forked = True
+        else:
+            self.Forked = False
         if Regularized == 'L2':
             self.reg = tf.keras.regularizers.l2(0.01)
+        if Regularized == 'L1':
+            self.reg = tf.keras.regularizers.l1(0.01)
         else:
             self.reg = None
 
@@ -84,13 +88,17 @@ class FCNN:
                     kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer = self.reg))
         
             ADAM = tf.keras.optimizers.Adam(learning_rate = self.L_rate)
-            model.compile(optimizer = ADAM, loss='mean_squared_error', metrics=['mse'])
+            if self.output_layer == "exponential":
+                model.compile(optimizer = ADAM, loss='mean_squared_error', metrics=['mse'])
+            elif self.output_layer == "sigmoid":
+                model.compile(optimizer = ADAM, loss='binary_crossentropy', metrics=['binary_accuracy'])
+
             model.fit(x = X_train, y = Y_train, batch_size = self.mbatch_sz, epochs = self.num_epochs,\
                     verbose = self.verbose)
 
         return model
 
-    def predict(self, model, X, Y):
+    def predict(self, model, X, Y, metric = None):
         MSE = model.evaluate(x = X, y = Y, verbose = 0)
         predictions = model.predict(x = X)
 
