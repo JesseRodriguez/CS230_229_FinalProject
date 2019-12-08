@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
-This is the README for Jesse Rodriguez's CS 229 Final Project
+This is the README for Jesse Rodriguez's CS 229/230 Final Projects
 -------------------------------------------------------------------------------
 Objective: This code creates various machine learning models which are trained
 to predict the outcome of NBA basketball games. See final report for further
