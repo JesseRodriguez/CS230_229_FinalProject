@@ -13,6 +13,8 @@ File Glossary
 - BuildAll.py: Python script that builds formatted datasets for every num_games
   num_players combo up to a specified limit for each (10x10 currently)
 
+- CleanUpAccs.py: Python script that produces nice accuracy heatmap plots
+
 - LogReg.py: Python script that executes custom logistic regression classifier.
 
 - LogisticRegression.py: Custom Logistic Regression classifier class. Rendered
@@ -35,4 +37,9 @@ File Glossary
   for each num_players and num_games combo and give accuracy on train and dev
   sets
 
+- TestAll.py: Python script that tests all models with parameters determined 
+  during development on the test sets
+
 - utilities.py: Helper functions, mostly for plotting
+
+- Visualize.py: Python script that produces histograms of the datasets
